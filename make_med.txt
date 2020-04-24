@@ -1,0 +1,172 @@
+
+\connect postgress
+
+--drop database med;
+--
+create database med with
+	owner = postgres
+	encoding = 'UTF8'
+	LC_COLLATE = 'English_United States.1252'
+	LC_CTYPE = 'English_United States.1252'
+	tablespace = pg_default
+	connection limit = -1
+	;
+
+\connect med
+
+
+create schema test
+	authorization postgres
+	;
+
+
+create table test.person
+(
+	--person_id bigint not null default nextval('test.person_person_id_seq'::regclass)
+	person_id bigserial not null
+	,global_id uuid not null
+)
+tablespace pg_default;
+alter table test.person
+	owner to postgres
+	,add constraint person_pk primary key (person_id)
+	;
+
+insert into test.person
+(global_id)
+values
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')  -- postgres documetation example
+;
+
+
+create table test.disease
+(
+	disease_id serial not null
+	,disease varchar(32) not null
+)
+tablespace pg_default;
+alter table test.disease
+	owner to postgres
+	,add constraint disease_pk primary key (disease_id)
+	;
+
+insert into test.disease
+(disease)
+values
+('covid-19')
+,('diabetes type 1')
+,('diabetes type 2')
+;
+
+
+create table test.test_type
+(
+	test_type_id serial not null
+	,test_type varchar(32) not null
+)
+tablespace pg_default;
+alter table test.test_type
+	owner to postgres
+	,add constraint test_type_pk primary key (test_type_id)
+	;
+
+insert into test.test_type
+(test_type)
+values
+('self diagnosis')
+,('doctor diagnosis')
+,('pcr')
+,('antibody')
+,('lateral flow')
+;
+
+
+create table test.team
+(
+	team_id serial not null
+	,team varchar(32) not null
+)
+tablespace pg_default;
+alter table test.team
+	owner to postgres
+	,add constraint team_pk primary key (team_id)
+	;
+
+insert into test.team
+(team)
+values
+('unknown')
+,('self')
+,('Bosch')
+,('CDC')
+,('LabCorp')
+,('Sona Nanotech')
+;
+
+
+create table test.location
+(
+	location_id bigserial not null
+	,latitude numeric(9, 7) not null  -- 7 is max scale on google maps
+	,longitude numeric(10, 7) not null
+)
+tablespace pg_default;
+alter table test.location
+	owner to postgres
+	,add constraint location_pk primary key (location_id)
+	;
+	
+insert into test.location
+(latitude, longitude)
+values
+(90, 0)
+,(43.2221106, -86.2439535)  -- Mercy Health Hackley Campus, 1700 Clinton St, Muskegon, MI 49442
+;
+
+
+create table test.test
+(
+	test_id bigserial not null
+	,person_id bigserial not null
+	,test_type_id serial not null
+	,manufacturer_id serial not null
+	,supplier_id serial not null
+	,location_id bigserial not null
+	,tester_id bigserial not null
+	,test_date_time timestamp not null  -- utc
+	,result_lab_id serial not null
+	,result_date_time timestamp not null  -- utc
+	,result boolean not null
+)
+tablespace pg_default;
+alter table test.test
+	owner to postgres
+	,add constraint test_pk primary key (test_id)
+	,add constraint person_fk foreign key (person_id) references test.person (person_id)
+	,add constraint test_type_fk foreign key (test_type_id) references test.test_type (test_type_id)
+	,add constraint manufacturer_fk foreign key (manufacturer_id) references test.team (team_id)
+	,add constraint supplier_fk foreign key (supplier_id) references test.team (team_id)
+	,add constraint location_fk foreign key (location_id) references test.location (location_id)
+	,add constraint tester_fk foreign key (tester_id) references test.person (person_id)
+	,add constraint result_lab_fk foreign key (result_lab_id) references test.team (team_id)
+	;
+
+insert into test.test
+(	person_id, test_type_id, manufacturer_id, supplier_id, location_id, tester_id
+	,test_date_time
+	,result_lab_id
+	,result_date_time
+	,result
+)
+values
+(	1, 1, 1, 1, 1, 1
+	,'2020-02-29'
+	,1
+	,'2020-03-01'
+	,true
+)
+;
+
+
+
+
